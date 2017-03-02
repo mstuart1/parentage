@@ -12,9 +12,9 @@ library(data.table)
 
 #join Amphiprion
 labor <- src_mysql(dbname = "Laboratory", host = "amphiprion.deenr.rutgers.edu", 
-                   user = "katrinac", password = "yetistomp", port = 3306, create = F)
+                   user = "katrinac", password = "yetistomp&33", port = 3306, create = F)
 leyte <- src_mysql(dbname = "Leyte", host = "amphiprion.deenr.rutgers.edu", 
-                   user = "katrinac", password = "yetistomp", port = 3306, create = F)
+                   user = "katrinac", password = "yetistomp&33", port = 3306, create = F)
 
 #create potential adults file
 c1 <- leyte %>% tbl("clownfish") %>% select(size, sample_id, col, Spp)
@@ -34,7 +34,7 @@ c5 <- collect(left_join(c4, c3, by = "digest_id"))
 adults <- inner_join(adultID, c5, by= "sample_id")
 ligidA <- select(adults, ligation_id)
 
-write.table(ligidA, file="adults.txt", row.names = FALSE, col.names = FALSE)
+write.table(ligidA, file="adults.txt", row.names = FALSE, col.names = FALSE, quote= FALSE)
 
 #now want to create juveniles file
 c1 <- leyte %>% tbl("clownfish") %>% select(size, sample_id, col, Spp)
@@ -47,4 +47,4 @@ juvID <-filter(juvs, sample_id != "NA")
 
 ligidJ <- select(juvID, ligation_id)
 
-write.table(ligidJ, file="juv.txt", row.names = FALSE, col.names = FALSE)
+write.table(ligidJ, file="juv.txt", row.names = FALSE, col.names = FALSE, quote= FALSE)
