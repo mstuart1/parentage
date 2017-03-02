@@ -11,10 +11,10 @@ library(dplyr)
 library(data.table)
 
 #join Amphiprion
-labor <- src_mysql(dbname = "Laboratory", host = "amphiprion.deenr.rutgers.edu", 
-                   user = "katrinac", password = "yetistomp&33", port = 3306, create = F)
-leyte <- src_mysql(dbname = "Leyte", host = "amphiprion.deenr.rutgers.edu", 
-                   user = "katrinac", password = "yetistomp&33", port = 3306, create = F)
+labor <- src_mysql(dbname = "Laboratory", default.file = path.expand("/Users/kat1/Documents/GradSchool/parentage/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
+
+leyte <- src_mysql(dbname = "Leyte", default.file = path.expand("/Users/kat1/Documents/GradSchool/parentage/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
+
 
 #create potential adults file
 c1 <- leyte %>% tbl("clownfish") %>% select(size, sample_id, col, Spp)

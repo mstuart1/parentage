@@ -14,8 +14,8 @@ idcsv <- idcsv[!is.na(idcsv$Loci.typed.1),]
 # -----------------------------------------------------
 library(data.table)
 suppressMessages(library(dplyr))
-labor <- src_mysql(dbname = "Laboratory", host = "amphiprion.deenr.rutgers.edu", 
-                   user = "katrinac", password = "yetistomp&33", port = 3306, create = F)
+labor <- src_mysql(dbname = "Laboratory", default.file = path.expand("/Users/kat1/Documents/GradSchool/parentage/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
+
 
 
 # add lab IDs
@@ -54,8 +54,7 @@ idcsv <- left_join(idcsv, lab3, by =c("Offspring.ID" = "Offs.ligation_id"))
 
 # Add field data
 # ----------------------------------------------------------
-leyte <- src_mysql(dbname = "Leyte", host = "amphiprion.deenr.rutgers.edu", 
-                   user = "katrinac", password = "yetistomp&33", port = 3306, create = F)
+leyte <- src_mysql(dbname = "Leyte", default.file = path.expand("/Users/kat1/Documents/GradSchool/parentage/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
 
 
 c1 <- leyte %>% tbl("diveinfo") %>% select(id, date, name)
