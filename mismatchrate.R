@@ -12,6 +12,7 @@ write.table(ident, file="ident.txt", row.names = FALSE, col.names = TRUE, quote=
 ident<-read.table(file="ident.txt", col.names=c("FirstSampleID", "SecondSampleID","Mismatch"))
 
 genepop<-readGenepop(file='seq17_03_58loci.gen')
+head(genepop)
 first<-select(ident, FirstSampleID)
 second<-select(ident, SecondSampleID)
 
@@ -25,23 +26,22 @@ c3 <- left_join(c2, c1, by = "extraction_id")
 c4 <- labor %>% tbl("ligation") %>% select(ligation_id, digest_id)
 c5 <- collect(left_join(c4, c3, by = "digest_id"))
 #semijoin c5 with your genepop
-31/809
+
 #drop columns for a table of just ligation ids
-firstly<-firstligid[-c(2:5)]
+#firstly<-firstligid[-c(2:5)]
 
 #recapture genotypes to compare against Cervus identity analysis
-ligationid<- left_join(second, c5, by=c(SecondSampleID = "sample_id"))
-secondligid<-left_join(ligationid, genepop, by=c(ligation_id = "names"))
-#write these into a csv to copy and past into the Cervus Identity csv 
-#maybe not necessary...
-write.csv(firstligid, file="firstcapture.csv", row.names = FALSE, col.names = TRUE, quote= FALSE, sep = " ")
-write.csv(secondligid, file="secondcapture.csv", row.names = FALSE, col.names = TRUE, quote= FALSE, sep = " ")
+ligationid<- left_join(second, c5, by=c(SecondSampleID = "ligation_id"))
+secondligid<-left_join(ligationid, genepop, by=c(SecondSampleID = "names"))
+
 
 #with Cervus identity results, filter for known recapture pairs and get the mismatch rates
 #then you can get an average mismatch rate
 IDanalysis<-read.csv(file='58lociID.csv')
-pair<-filter(IDanalysis, contains("L2420"))
+allpairs<-left_join(secondligid, IDanalysis, by=c(SecondSampleID = "Second.ID"))
+allpairs2<-select(allpairs, SecondSampleID, First.ID, Mismatching.loci)
+pair<-filter(allpairs2, SecondSampleID == "L1733", First.ID == "L0465")
+#for some reason, when searching for known pairs that I got from amphiprion, those known pairs don't come up as matched by the cervus identity analysis....maybe need to ask Michelle. 03/03/17 
 class(IDanalysis)
 
 
-labor <- src_mysql(dbname = "Laboratory", default.file = path.expand("~/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
