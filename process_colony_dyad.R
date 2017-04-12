@@ -1,11 +1,15 @@
 ###03/22/17 code to assign locations and sizes to sibling pairs in colony results, identify parents by size and tail color
 # Set up working space ----------------------------------------------------
 setwd("~/Documents/GradSchool/parentage")
+source("~/Documents/GradSchool/parentage/samplefromlig.R")
+source("~/Documents/GradSchool/parentage/conleyte.R")
+source("~/Documents/GradSchool/parentage/conlabor.R")
 #source("~/Documents/GradSchool/parentage/readGenepop_space.R")
 suppressMessages(library(dplyr))
+library(igraph)
 
 #import data
-pairs <- read.table(file= "174HQ_PairwisePaternity.txt", header= TRUE)	
+pairs <- read.table(file= "174HQloci_adult_sep_2013.PairwiseMaternity.txt", header= TRUE)	
 labor <- src_mysql(dbname = "Laboratory", default.file = path.expand("/Users/kat1/Documents/GradSchool/parentage/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
 
 
@@ -55,87 +59,6 @@ names(second) <- paste("par.", names(second), sep = "")
 idcsv <- left_join(idcsv, first, by = c(offs.sample_id = "offs.Sample_ID"))
 idcsv <- left_join(idcsv, second, by = c(par.sample_id = "par.Sample_ID"))
 
-
-#null to remove column, NA to create
-idcsv$offs.lat <- NULL
-idcsv$offs.lon <- NULL
-idcsv$par.lat <- NULL
-idcsv$par.lon <- NULL
-
-
-
-latlong <- data.frame(leyte %>% tbl("GPX") %>% collect(n = Inf))
-# latlong <- leyte %>% tbl('GPX')
-
-### WAIT ###
-
-# Add lat long for first.id
-# -----------------------------------------------
-for(i in 1:nrow(idcsv)){
-  #Get date and time information for the anemone
-  date <- as.character(idcsv$offs.date[i])
-  datesplit <- strsplit(date,"-", fixed = T)[[1]]
-  year <- as.numeric(datesplit[1])
-  month <- as.numeric(datesplit[2])
-  day <- as.numeric(datesplit[3])
-  time <- as.character(idcsv$offs.ObsTime[i])
-  timesplit <- strsplit(time, ":", fixed = T)[[1]]
-  hour <- as.numeric(timesplit[1])
-  min <- as.numeric(timesplit[2])
-  sec <- as.numeric(timesplit[3])
-  
-  # Convert time to GMT
-  hour <- hour - 8
-  if(!is.na(hour) & hour <0){
-    day <- day-1
-    hour <- hour + 24
-  }
-
-
-  # Find the location records that match the date/time stamp (to nearest second)
-  latlongindex <- which(latlong$year == year & latlong$month == month & latlong$day == day & latlong$hour == hour & latlong$min == min)
-  i2 <- which.min(abs(latlong$sec[latlongindex] - sec))
-  
-  # Calculate the lat/long for this time
-  if(length(i2)>0){
-    idcsv$offs.lat[i] = latlong$lat[latlongindex][i2]
-    idcsv$offs.lon[i] = latlong$long[latlongindex][i2]
-  }
-}
-
-# Add lat long for second.id
-# -----------------------------------------------
-for(i in 1:nrow(idcsv)){
-  #Get date and time information for the anemone
-  date <- as.character(idcsv$par.date[i])
-  datesplit <- strsplit(date,"-", fixed = T)[[1]]
-  year <- as.numeric(datesplit[1])
-  month <- as.numeric(datesplit[2])
-  day <- as.numeric(datesplit[3])
-  time <- as.character(idcsv$par.ObsTime[i])
-  timesplit <- strsplit(time, ":", fixed = T)[[1]]
-  hour <- as.numeric(timesplit[1])
-  min <- as.numeric(timesplit[2])
-  sec <- as.numeric(timesplit[3])
-  
-  # Convert time to GMT
-  hour <- hour - 8
-  if(!is.na(hour) & hour <0){
-    day <- day-1
-    hour <- hour + 24
-  }
-  
-  # Find the location records that match the date/time stamp (to nearest second)
-  latlongindex <- which(latlong$year == year & latlong$month == month & latlong$day == day & latlong$hour == hour & latlong$min == min)
-  i2 <- which.min(abs(latlong$sec[latlongindex] - sec))
-  
-  # Calculate the lat/long for this time
-  if(length(i2)>0){
-    idcsv$par.lat[i] = latlong$lat[latlongindex][i2]
-    idcsv$par.lon[i] = latlong$long[latlongindex][i2]
-  }
-}
-
 #create potential adults file
 c1 <- leyte %>% tbl("diveinfo") %>% select(id, date, name)
 c2 <- leyte %>% tbl("anemones") %>% select(dive_table_id, anem_table_id, ObsTime)
@@ -164,8 +87,8 @@ names(first) <- paste("offs.", names(first), sep = "")
 names(second) <- paste("par.", names(second), sep = "")
 
 #left off here, have to figure out how to join and get the adultID table info into idcsv, then need to filter with a for loop that flags matches with high prob and matches with parent/offspring pairs, based on if one is an adult, so will want to flag adults first thing
-idcsv <- left_join(idcsv, second, by = c("Second.sample_id"))
-idcsv <- left_join(idcsv, first, by =  c(OffspringID1 = "First.sample_id"))
+idcsv <- left_join(idcsv, second, by = c("par.sample_id"))
+idcsv <- left_join(idcsv, first, by =  c(OffspringID = "offs.sample_id"))
 
 #what's the distribution of parent and offspring sizes look like?
 
@@ -190,12 +113,12 @@ good
 
 #about one quarter of the calculated parent offspring pairs make sense. The remainder could be siblings, so let's look at the full sibs and half sibs. There are more half sibs than full sibs, which could make some sense if the parent pairs aren't consistent year to year. In which case, a you're more likely to get more half sibs than full sibs because the type 1 survivorship of clownfish in general. let's take a look
 
-fullsib <- read.table(file= "174HQ_FullSibDyad.txt", header= TRUE)
+fullsib <- read.table(file= "174HQloci_adult_sep_2013.FullSibDyad.txt", header= TRUE)
 fullsibOFF <- fullsib
 names(fullsibOFF) <- paste("fullsibOFFS.", names(fullsibOFF), sep = "")
 
 	
-halfsib <- read.table(file= "174HQ_HalfSibDyad.txt", header= TRUE)	
+halfsib <- read.table(file= "174HQloci_adult_sep_2013.HalfSibDyad.txt", header= TRUE)	
 halfsibOFF <- halfsib
 names(halfsibOFF) <- paste("halfsibOFFS.", names(halfsibOFF), sep = "")
 
@@ -216,7 +139,7 @@ goodfs <- idcsv %>%	select(OffspringID, CandidateID, offs.name, par.name, offs.S
 good
 
 none <- withhspar %> filter()
-write.csv(withhspar, file="174_colonypars_sibs.csv", quote=FALSE, col.names=TRUE)
+write.csv(withhspar, file="174_colonypars_sibs_adultsep13.csv", quote=FALSE, col.names=TRUE)
 
 
 ####Colony error rate analysis
@@ -226,85 +149,18 @@ mean(er$OtherErrorRateEst)
 hist(er$OtherErrorRateEst, breaks=(40), xlim=c(0,  .40))
 
 
-#now want to visualize the families/parent offspring pairs. Use igraph for this, it will create networks
-#create a matrix of nodes
+#now look at the difference between full likelihood parentage and pairwise parentage
+fs <- as.matrix(fullsib)
+par <- as.matrix(pairs)
 
-#first get rid of low probability matches
-fullsib <-filter(fullsib, Probability > 0.95)
-halfsib <- filter(halfsib, Probability > 0.95)
-edgesp <- data.frame(select(idcsv, OffspringID, CandidateID), stringsAsFactors = FALSE)
-edgesp$type <- "parent"
-edgesfs <- data.frame(select(fullsib, sib1, sib2), stringsAsFactors = FALSE)
-edgesfs$type <- "fullsib"
-edgeshs <- select(halfsib, hsib1, hsib2)
-edgeshs$type <- "halfsib"
-names(edgesp) <- c("one", "two", "type")
-names(edgesfs) <- c("one", "two", "type")
-names(edgeshs) <- c("one", "two", "type")
-edges1 <- rbind(edgesp, edgesfs)
-edges2 <- rbind(edges1, edgeshs)
+match <- left_join(pairs, fullsib, by=c(OffspringID="sib1", CandidateID="sib2"))
+match2 <- left_join(pairs, fullsib, by=c(OffspringID="sib2", CandidateID="sib1"))
+match3 <- match %>% filter(Probability > 0.95)
+match4 <- match2 %>% filter(Probability > 0.95)	
+#looks like 12 parent pairs are also identified as full siblings by FL method
+match <- left_join(pairs, halfsib, by=c(OffspringID="hsib1", CandidateID="hsib2"))
+match2 <- left_join(pairs, halfsib, by=c(OffspringID="hsib2", CandidateID="hsib1"))
+match3 <- match %>% filter(Probability > 0.95)
+match4 <- match2 %>% filter(Probability > 0.95)	 
 
 
-nodes1 <- select(idcsv, OffspringID)
-nodes2 <- select(idcsv, CandidateID)
-nodes3 <- select(fullsib, sib1)
-nodes4 <- select(fullsib, sib2)
-nodes5 <- select(halfsib, hsib1)
-nodes6 <- select(halfsib, hsib2)
-nodesa <- full_join(nodes1, nodes2, by=c(OffspringID = "CandidateID"))
-nodesb <-full_join(nodesa, nodes3, by=c(OffspringID = "sib1"))
-nodesc <-full_join(nodesb, nodes4, by=c(OffspringID = "sib2"))
-nodesd <-full_join(nodesc, nodes5, by=c(OffspringID = "hsib1"))
-nodese <-full_join(nodesd, nodes6, by=c(OffspringID = "hsib2"))
-
-
-#remove duplicate vertexs and nodes
-nodes <- distinct(nodese)
-edges <- distinct(edges2)
-
-#optional: add size classification for vertices, to see who is big and small and so who might be adult/juv. Run code below and then remake nodes and edges matrics
-#want to add sizes from only 2012 ligation ids
-#now that I have adult IDs, need to connect these to ligation IDs
-#YEAR 2012
-c1 <- labor %>% tbl("extraction") %>% select(extraction_id, sample_id)
-c2 <- labor %>% tbl("digest") %>% select(digest_id, extraction_id)
-c3 <- left_join(c2, c1, by = "extraction_id")
-c4 <- labor %>% tbl("ligation") %>% select(ligation_id, digest_id)
-c6 <- collect(left_join(c4, c3, by = "digest_id"))
-ids <- inner_join(c5, c6, by= "sample_id")
-size <-ids %>% filter(date >= as.Date("2012-04-12") & date <= as.Date("2012-07-31"))
-
-sizes <- left_join(size, clowns, by="sample_id") %>% select(ligation_id.x, size)
-nodesS <- inner_join(nodes, sizes, by=c(OffspringID= "ligation_id.x"))
-nodesS
-#well, I have no idea why but there are two sizes recorded for four sample IDs, so there are 4 repeats and you can't run the graph analysis with repeats. So manually write out the table ans
-nodesS$ratio <- NA
-
-for (i in 1:nrow(nodesS))
-{
-  if ((nodesS$size[i] < 8))
-  {
-    nodesS$ratio[i] <- "small"
-  }
-}
-
-for (i in 1:nrow(nodesS))
-{
-  if ((nodesS$size[i] >= 8))
-  {
-    nodesS$ratio[i] <- "big"
-  }
-}
-
-#make into igraph matrix
-net <- graph_from_data_frame(d=edges, vertices=nodes, directed=F)
-E(net)$color <- as.factor(E(net)$type)
-V(net)$color <- as.factor(V(net)$ratio)
-#plot
-plot(net, edge.arrow.size=.4, vertex.label=V(net)$nodes, vertex.size=4, 
-
-     vertex.frame.color="gray", vertex.label.color="black", vertex.label.cex=0.2, vertex.label.dist=0)
-	 
-net
-
- 
