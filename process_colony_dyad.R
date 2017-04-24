@@ -113,12 +113,12 @@ good
 
 #about one quarter of the calculated parent offspring pairs make sense. The remainder could be siblings, so let's look at the full sibs and half sibs. There are more half sibs than full sibs, which could make some sense if the parent pairs aren't consistent year to year. In which case, a you're more likely to get more half sibs than full sibs because the type 1 survivorship of clownfish in general. let's take a look
 
-fullsib <- read.table(file= "174HQloci_adult_sep_2013.FullSibDyad.txt", header= TRUE)
+fullsib <- read.table(file= "174HQloci_adult_sep_2013.MP10.FullSibDyad.txt", header= TRUE)
 fullsibOFF <- fullsib
 names(fullsibOFF) <- paste("fullsibOFFS.", names(fullsibOFF), sep = "")
 
 	
-halfsib <- read.table(file= "174HQloci_adult_sep_2013.HalfSibDyad.txt", header= TRUE)	
+halfsib <- read.table(file= "174HQloci_adult_sep_2013.MP10.HalfSibDyad.txt", header= TRUE)	
 halfsibOFF <- halfsib
 names(halfsibOFF) <- paste("halfsibOFFS.", names(halfsibOFF), sep = "")
 
@@ -142,17 +142,13 @@ none <- withhspar %> filter()
 write.csv(withhspar, file="174_colonypars_sibs_adultsep13.csv", quote=FALSE, col.names=TRUE)
 
 
-####Colony error rate analysis
-er <- read.table(file='174HQ_ErrorRate.txt', header=TRUE)
-
-mean(er$OtherErrorRateEst)
-hist(er$OtherErrorRateEst, breaks=(40), xlim=c(0,  .40))
-
-
 #now look at the difference between full likelihood parentage and pairwise parentage
 fs <- as.matrix(fullsib)
-par <- as.matrix(pairs)
+hs <- as.matrix(halfsib)
+fs <- fullsib %>% filter(Probability > 0.98)
+hs <- halfsib %>% filter(Probability > 0.98)
 
+par <- as.matrix(pairs)
 match <- left_join(pairs, fullsib, by=c(OffspringID="sib1", CandidateID="sib2"))
 match2 <- left_join(pairs, fullsib, by=c(OffspringID="sib2", CandidateID="sib1"))
 match3 <- match %>% filter(Probability > 0.95)
@@ -161,6 +157,27 @@ match4 <- match2 %>% filter(Probability > 0.95)
 match <- left_join(pairs, halfsib, by=c(OffspringID="hsib1", CandidateID="hsib2"))
 match2 <- left_join(pairs, halfsib, by=c(OffspringID="hsib2", CandidateID="hsib1"))
 match3 <- match %>% filter(Probability > 0.95)
-match4 <- match2 %>% filter(Probability > 0.95)	 
+match4 <- match2 %>% filter(Probability > 0.95)	
+
+#now check out how different analysis parameters compare
+fullsib <- read.table(file= "174HQloci_adult_sep_2013NP.FullSibDyad.txt", header= TRUE)
+halfsib <- read.table(file= "174HQloci_adult_sep_2013NP.HalfSibDyad.txt", header= TRUE)	
+fsNP <- fullsib %>% filter(Probability > 0.98)
+hsNP <- halfsib %>% filter(Probability > 0.98)
+fsWP1 <- fullsib %>% filter(Probability > 0.98)
+hsWP1 <- halfsib %>% filter(Probability > 0.98)
+fsMP1 <- fullsib %>% filter(Probability > 0.98)
+hsMP1 <- halfsib %>% filter(Probability > 0.98)
+fsMP10 <- fullsib %>% filter(Probability > 0.98)
+hsMP10 <- halfsib %>% filter(Probability > 0.98)
+
+match <- semi_join(fsNP, fsMP1, by=c("OffspringID1", "OffspringID2"))
+
+
+####Colony error rate analysis
+er <- read.table(file='174HQ_ErrorRate.txt', header=TRUE)
+
+mean(er$OtherErrorRateEst)
+hist(er$OtherErrorRateEst, breaks=(40), xlim=c(0,  .40))
 
 

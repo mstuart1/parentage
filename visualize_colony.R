@@ -5,14 +5,14 @@ setwd("~/Documents/GradSchool/parentage")
 #source("~/Documents/GradSchool/parentage/readGenepop_space.R")
 suppressMessages(library(dplyr))
 library(igraph)
-fullsib <- read.table(file= "174HQloci_adult_sep_2013.FullSibDyad.txt", header= TRUE)
-halfsib <- read.table(file= "174HQloci_adult_sep_2013.HalfSibDyad.txt", header= TRUE)	
-pairs <- read.table(file= "174HQloci_adult_sep_2013.PairwiseMaternity.txt", header= TRUE)	
+fullsib <- read.table(file= "174HQloci_adult_sep_2013.FullSibDyad10.txt", header= TRUE)
+halfsib <- read.table(file= "174HQloci_adult_sep_2013.HalfSibDyad10.txt", header= TRUE)	
+pairs <- read.table(file= "174HQloci_adult_sep_2013.Paternity.txt", header= TRUE)	
 
 #first get rid of low probability matches
 fullsib <-filter(fullsib, Probability > 0.95)
 halfsib <- filter(halfsib, Probability > 0.95)
-edgesp <- data.frame(select(idcsv, OffspringID, CandidateID), stringsAsFactors = FALSE)
+edgesp <- data.frame(select(pairs, OffspringID, InferredDad1), stringsAsFactors = FALSE)
 edgesp$type <- "parent"
 edgesfs <- data.frame(select(fullsib, sib1, sib2), stringsAsFactors = FALSE)
 edgesfs$type <- "fullsib"
@@ -25,13 +25,13 @@ edges1 <- rbind(edgesp, edgesfs)
 edges2 <- rbind(edges1, edgeshs)
 
 
-nodes1 <- select(idcsv, OffspringID)
-nodes2 <- select(idcsv, CandidateID)
+nodes1 <- select(pairs, OffspringID)
+nodes2 <- select(pairs, InferredDad1)
 nodes3 <- select(fullsib, sib1)
 nodes4 <- select(fullsib, sib2)
 nodes5 <- select(halfsib, hsib1)
 nodes6 <- select(halfsib, hsib2)
-nodesa <- full_join(nodes1, nodes2, by=c(OffspringID = "CandidateID"))
+nodesa <- full_join(nodes1, nodes2, by=c(OffspringID = "InferredDad1"))
 nodesb <-full_join(nodesa, nodes3, by=c(OffspringID = "sib1"))
 nodesc <-full_join(nodesb, nodes4, by=c(OffspringID = "sib2"))
 nodesd <-full_join(nodesc, nodes5, by=c(OffspringID = "hsib1"))
@@ -61,7 +61,7 @@ nodesS
 nodesS$ratio <- NA
 
 #for (i in 1:nrow(nodesS))
-{
+#{
   if ((nodesS$size[i] < 8))
   {
     nodesS$ratio[i] <- "small"
@@ -69,7 +69,7 @@ nodesS$ratio <- NA
 }
 
 #for (i in 1:nrow(nodesS))
-{
+#{
   if ((nodesS$size[i] >= 8))
   {
     nodesS$ratio[i] <- "big"
@@ -83,7 +83,7 @@ V(net)$color <- as.factor(V(net)$ratio)
 #plot
 plot(net, edge.arrow.size=.4, vertex.label=V(net)$nodes, vertex.size=4, 
 
-     vertex.frame.color="gray", vertex.label.color="black", vertex.label.cex=0.2, vertex.label.dist=0)
+     vertex.frame.color="gray", vertex.label.color="black", vertex.label.cex=0.2, vertex.label.dist=0, label.x=edges)
 	 
 net
 

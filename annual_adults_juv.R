@@ -5,8 +5,6 @@ setwd("~/Documents/GradSchool/parentage")
 
 #load packages
 library(dplyr)
-library(data.table)
-library(lubridate)
 #join Amphiprion
 labor <- src_mysql(dbname = "Laboratory", default.file = path.expand("/Users/kat1/Documents/GradSchool/parentage/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
 leyte <- src_mysql(dbname = "Leyte", default.file = path.expand("/Users/kat1/Documents/GradSchool/parentage/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
@@ -20,7 +18,7 @@ first <- collect(left_join(c4, c3, by = "anem_table_id"))
 c1 <- leyte %>% tbl("clownfish") %>% select(size, sample_id, col, Spp)
 c2 <-collect(c1)
 clowns<- filter(c2, Spp=="APCL")
-clownA <- filter(clowns, size >= "7" | col== "YP" | col== "TE" | col== "YPO" | col== "OP"| col== "OR")
+clownA <- filter(clowns, size >= "8")
 
 #get rid of rows with NA in sample_id
 adultID <-filter(clownA, sample_id != "NA")
