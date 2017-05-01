@@ -9,8 +9,8 @@ suppressMessages(library(dplyr))
 library(igraph)
 
 #import data
-pairs <- read.table(file= "174HQloci_adult_sep_2013.PairwiseMaternity.txt", header= TRUE)	
-labor <- src_mysql(dbname = "Laboratory", default.file = path.expand("/Users/kat1/Documents/GradSchool/parentage/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
+pairs <- read.table(file= "174HQloci_adult_sep_2013WP1.Maternity.txt", header= TRUE)	
+labor <- conlabor()
 
 
 
@@ -33,13 +33,12 @@ withoff <- left_join(pairs, lab1, by = c("OffspringID" = "offs.ligation_id"))
 lab2 <- c5
 names(lab2) <- paste("par.", names(lab2), sep = "")
 
-withpar <- left_join(withoff, lab2, by = c("CandidateID" = "par.ligation_id"))
+withpar <- left_join(withoff, lab2, by = c("InferredMum1" = "par.ligation_id"))
 
 idcsv <- withpar
 # Add field data
 # ----------------------------------------------------------
-leyte <- src_mysql(dbname = "Leyte", default.file = path.expand("/Users/kat1/Documents/GradSchool/parentage/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
-
+leyte <- conleyte()
 
 c1 <- leyte %>% tbl("diveinfo") %>% select(id, date, name)
 c2 <- leyte %>% tbl("anemones") %>% select(dive_table_id, anem_table_id, ObsTime)
@@ -86,7 +85,6 @@ second <- adultID
 names(first) <- paste("offs.", names(first), sep = "")
 names(second) <- paste("par.", names(second), sep = "")
 
-#left off here, have to figure out how to join and get the adultID table info into idcsv, then need to filter with a for loop that flags matches with high prob and matches with parent/offspring pairs, based on if one is an adult, so will want to flag adults first thing
 idcsv <- left_join(idcsv, second, by = c("par.sample_id"))
 idcsv <- left_join(idcsv, first, by =  c(OffspringID = "offs.sample_id"))
 
@@ -113,12 +111,12 @@ good
 
 #about one quarter of the calculated parent offspring pairs make sense. The remainder could be siblings, so let's look at the full sibs and half sibs. There are more half sibs than full sibs, which could make some sense if the parent pairs aren't consistent year to year. In which case, a you're more likely to get more half sibs than full sibs because the type 1 survivorship of clownfish in general. let's take a look
 
-fullsib <- read.table(file= "174HQloci_adult_sep_2013.MP10.FullSibDyad.txt", header= TRUE)
+fullsib <- read.table(file= "174HQloci_adult_sep_2013WP1.FullSibDyad.txt", header= TRUE)
 fullsibOFF <- fullsib
 names(fullsibOFF) <- paste("fullsibOFFS.", names(fullsibOFF), sep = "")
 
 	
-halfsib <- read.table(file= "174HQloci_adult_sep_2013.MP10.HalfSibDyad.txt", header= TRUE)	
+halfsib <- read.table(file= "174HQloci_adult_sep_2013WP1.HalfSibDyad.txt", header= TRUE)	
 halfsibOFF <- halfsib
 names(halfsibOFF) <- paste("halfsibOFFS.", names(halfsibOFF), sep = "")
 
@@ -130,8 +128,8 @@ names(halfsibPAR) <- paste("halfsibPAR.", names(halfsibPAR), sep = "")
 
 withfsoff <- left_join(idcsv, fullsibOFF, by=c(OffspringID = "fullsibOFFS.sib1"))
 withhsoff <- left_join(withfsoff, halfsibOFF, by=c(OffspringID = "halfsibOFFS.hsib1"))
-withfspar <- left_join(withhsoff, fullsibPAR, by=c(CandidateID = "fullsibPAR.sib1"))
-withhspar <- left_join(withfspar, halfsibPAR, by=c(CandidateID = "halfsibPAR.hsib1"))
+withfspar <- left_join(withhsoff, fullsibPAR, by=c(InferredMum1 = "fullsibPAR.sib1"))
+withhspar <- left_join(withfspar, halfsibPAR, by=c(InferredMum1 = "halfsibPAR.hsib1"))
 
 
 
