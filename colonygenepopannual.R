@@ -37,9 +37,9 @@ genes14 <-genes14[-c(1,1)]
 write.table(genes14, file="174HQloci2014_norecap_ALL.gen", row.names = FALSE, col.names = TRUE, quote= FALSE, sep = " ")
 
 #load convert csv from Cervus and write as text file
-convert <- read.csv(file="174HQloci2013_norecap_ALL.csv")
+convert <- read.csv(file="174HQ_norecap2014ADULTS.csv")
 converted <-convert[-c(1,1)]
-write.table(converted, file="174HQloci2013_norecap_ALL.txt", row.names = FALSE, col.names = TRUE, quote= FALSE, sep = " ")
+write.table(converted, file="174HQloci2014_norecap_ADULTS.txt", row.names = FALSE, col.names = TRUE, quote= FALSE, sep = " ")
 
 #make excluded paternity file
 adults <-final[c(1,1)]
