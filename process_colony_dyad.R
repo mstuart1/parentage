@@ -9,7 +9,7 @@ suppressMessages(library(dplyr))
 library(igraph)
 
 #import data
-pairs <- read.table(file= "174HQloci_adult_sep_2013WP1.Maternity.txt", header= TRUE)	
+pairs <- read.table(file= "174HQ_parentage_2014.Maternity.txt", header= TRUE)	
 labor <- conlabor()
 
 
@@ -106,17 +106,17 @@ for (i in 1:nrow(idcsv))
   }
 }
 good <- idcsv %>% filter(ratio == "GOOD") %>%
-	select(OffspringID, CandidateID, offs.name, par.name, offs.Size, par.Size, ratio)
+	select(OffspringID, InferredMum1, offs.name, par.name, offs.Size, par.Size, ratio)
 good
 
 #about one quarter of the calculated parent offspring pairs make sense. The remainder could be siblings, so let's look at the full sibs and half sibs. There are more half sibs than full sibs, which could make some sense if the parent pairs aren't consistent year to year. In which case, a you're more likely to get more half sibs than full sibs because the type 1 survivorship of clownfish in general. let's take a look
 
-fullsib <- read.table(file= "174HQloci_adult_sep_2013WP1.FullSibDyad.txt", header= TRUE)
+fullsib <- read.table(file= "174HQ_parentage_2014.FullSibDyad.txt", header= TRUE)
 fullsibOFF <- fullsib
 names(fullsibOFF) <- paste("fullsibOFFS.", names(fullsibOFF), sep = "")
 
 	
-halfsib <- read.table(file= "174HQloci_adult_sep_2013WP1.HalfSibDyad.txt", header= TRUE)	
+halfsib <- read.table(file= "174HQ_parentage_2014.HalfSibDyad.txt", header= TRUE)	
 halfsibOFF <- halfsib
 names(halfsibOFF) <- paste("halfsibOFFS.", names(halfsibOFF), sep = "")
 
@@ -133,11 +133,10 @@ withhspar <- left_join(withfspar, halfsibPAR, by=c(InferredMum1 = "halfsibPAR.hs
 
 
 
-goodfs <- idcsv %>%	select(OffspringID, CandidateID, offs.name, par.name, offs.Size, par.Size, ratio, sib2.x)
+goodfs <- idcsv %>%	select(OffspringID, InferredMum1, offs.name, par.name, offs.Size, par.Size, ratio, sib2.x)
 good
 
-none <- withhspar %> filter()
-write.csv(withhspar, file="174_colonypars_sibs_adultsep13.csv", quote=FALSE, col.names=TRUE)
+write.csv(withhspar, file="174_colonypars_sibs_adultsep14.csv", quote=FALSE, col.names=TRUE)
 
 
 #now look at the difference between full likelihood parentage and pairwise parentage

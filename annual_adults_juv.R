@@ -22,8 +22,8 @@ clownA <- filter(clowns, size >= "8")
 
 #get rid of rows with NA in sample_id
 adultID <-filter(clownA, sample_id != "NA")
-
 #now that I have adult IDs, need to connect these to ligation IDs
+
 #YEAR 2012
 c1 <- labor %>% tbl("extraction") %>% select(extraction_id, sample_id)
 c2 <- labor %>% tbl("digest") %>% select(digest_id, extraction_id)
@@ -86,29 +86,59 @@ write.table(ligid2, file="juv14.txt", row.names = FALSE, col.names = FALSE, quot
 
 
 #YEAR 2015
+c1 <- labor %>% tbl("extraction") %>% select(extraction_id, sample_id)
+c2 <- labor %>% tbl("digest") %>% select(digest_id, extraction_id)
+c3 <- left_join(c2, c1, by = "extraction_id")
+c4 <- labor %>% tbl("ligation") %>% select(ligation_id, digest_id)
+c5 <- collect(left_join(c4, c3, by = "digest_id"))
+adults <- inner_join(adultID, c5, by= "sample_id")
+adults2 <- inner_join(adults, first, by=c(sample_id = "Sample_ID"))
 adults15 <-adults2 %>% filter(date > as.Date("2015-04-12") & date < as.Date("2015-07-12"))
+adults15 <-filter(adults15, ligation_id != "NA")
+adults15 <-filter(adults15, sample_id != "NA")
 ligidA <- select(adults15, ligation_id)
 
 write.table(ligidA, file="adults15.txt", row.names = FALSE, col.names = FALSE, quote= FALSE)
+
+c1 <- leyte %>% tbl("clownfish") %>% select(size, sample_id, col, Spp)
+c2 <-collect(c1)
+clowns<- filter(c2, Spp=="APCL")
+clownJ <- anti_join(clowns, adults, by = "sample_id")
+juvs <- left_join(clownJ, c5, by= "sample_id")
+juvs2 <- left_join(juvs, first, by=c(sample_id = "Sample_ID"))
 juvs15 <-juvs2 %>% filter(date > as.Date("2015-04-12") & date < as.Date("2015-07-12"))
-
 #get rid of rows with NA in sample_id
-juvID <-filter(juvs15, sample_id != "NA")
+juvID <-filter(juvs15, ligation_id != "NA")
+juvID <-filter(juvID, sample_id != "NA")
 
-ligidJ <- select(juvs15, ligation_id)
-ligid2 <-filter(ligidJ, ligation_id != "NA")
-write.table(ligid2, file="juv15.txt", row.names = FALSE, col.names = FALSE, quote= FALSE)
+ligidJ <- select(juvID, ligation_id)
+write.table(ligidJ, file="juv15.txt", row.names = FALSE, col.names = FALSE, quote= FALSE)
 
 #YEAR 2016
-adults16 <-adults2 %>% filter(date >= as.Date("2016-04-12") & date <= as.Date("2016-07-12"))
+c1 <- labor %>% tbl("extraction") %>% select(extraction_id, sample_id)
+c2 <- labor %>% tbl("digest") %>% select(digest_id, extraction_id)
+c3 <- left_join(c2, c1, by = "extraction_id")
+c4 <- labor %>% tbl("ligation") %>% select(ligation_id, digest_id)
+c5 <- collect(left_join(c4, c3, by = "digest_id"))
+adults <- inner_join(adultID, c5, by= "sample_id")
+adults2 <- inner_join(adults, first, by=c(sample_id = "Sample_ID"))
+adults15 <-adults2 %>% filter(date > as.Date("2016-04-12") & date < as.Date("2016-07-12"))
+adults15 <-filter(adults15, ligation_id != "NA")
+adults15 <-filter(adults15, sample_id != "NA")
 ligidA <- select(adults15, ligation_id)
 
 write.table(ligidA, file="adults16.txt", row.names = FALSE, col.names = FALSE, quote= FALSE)
-juvs16 <-juvs2 %>% filter(date >= as.Date("2016-04-12") & date <= as.Date("2016-07-12"))
 
+c1 <- leyte %>% tbl("clownfish") %>% select(size, sample_id, col, Spp)
+c2 <-collect(c1)
+clowns<- filter(c2, Spp=="APCL")
+clownJ <- anti_join(clowns, adults, by = "sample_id")
+juvs <- left_join(clownJ, c5, by= "sample_id")
+juvs2 <- left_join(juvs, first, by=c(sample_id = "Sample_ID"))
+juvs15 <-juvs2 %>% filter(date > as.Date("2016-04-12") & date < as.Date("2016-07-12"))
 #get rid of rows with NA in sample_id
-juvID <-filter(juvs16, sample_id != "NA")
+juvID <-filter(juvs15, ligation_id != "NA")
+juvID <-filter(juvID, sample_id != "NA")
+
 ligidJ <- select(juvID, ligation_id)
-
 write.table(ligidJ, file="juv16.txt", row.names = FALSE, col.names = FALSE, quote= FALSE)
-
