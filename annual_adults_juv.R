@@ -72,7 +72,7 @@ ligid2 <-filter(ligidJ, ligation_id != "NA")
 write.table(ligid2, file="juv13.txt", row.names = FALSE, col.names = FALSE, quote= FALSE)
 
 #YEAR 2014
-adults14 <-adults2 %>% filter(date > as.Date("2014-04-12") & date < as.Date("2014-07-12"))
+adults14 <- adults2 %>% filter(date > as.Date("2014-04-12") & date < as.Date("2014-07-12"))
 ligidA <- select(adults14, ligation_id)
 
 write.table(ligidA, file="adults14.txt", row.names = FALSE, col.names = FALSE, quote= FALSE)
