@@ -40,9 +40,9 @@ coord <- unique(coor)
 
 #load tables with parent offspring matches and attach lat lon
 #prepare full likelihood parentage/sibship results for mapping
-fullsib <- read.table(file= "174HQ_parentage_2014.FullSibDyad.txt", header= TRUE)
-halfsib <- read.table(file= "174HQloci_adult_sep_2013WP1.HalfSibDyad.txt", header= TRUE)	
-pairs <- read.table(file= "174HQ_parentage_2014.Maternity.txt", header= TRUE)
+fullsib <- read.table(file= "175HQloci_adults_sep_2015.FullSibdyad.txt", header= TRUE)
+halfsib <- read.table(file= "175HQloci_adults_sep_2015.HalfSibdyad.txt", header= TRUE)	
+pairs <- read.table(file= "175HQloci_adults_sep_2015.Maternity.txt", header= TRUE)
 
 #fs <- sampfromlig(fullsib[1])#for some reason, not getting all the sample ids with this method, going to try old way
 #fs2 <- sampfromlig(fullsib[2])
@@ -407,11 +407,11 @@ lo <- read.csv(file="lo2014.csv", header=TRUE)
 library(rgdal)
 map_new <- readOGR("leyte", "coastlines_leyte")
 
-plot(map_new, xlim=c(124.63, 124.8 ), ylim=c(10.8,10.83))
+plot(map_new, xlim=c(124.7, 124.8 ), ylim=c(10.6,11))
 
 
 a<- graph_from_data_frame(vertices = nodes, d= edges, directed = TRUE)
-plot(a, rescale=FALSE, asp=0, add=TRUE, edge.arrow.size=.2, vertex.size=.4, vertex.frame.color=NA, 
+katPlot(a, rescale=FALSE, asp=0, add=TRUE, edge.arrow.size=.2, vertex.size=.4, vertex.frame.color=NA, 
 	 vertex.label.cex=.6, vertex.label.degree=pi, vertex.label.dist=.08, edge.width=edges$number, 
 		edge.color="slate grey", layout=lo, edge.curved=.1, vertex.label.font=2, vertex.label.color="gray40")
 #TO DO: MAKE A MAP OF SIBLING AND HALFSIBLING RELATEDNESS ACCORING TO SITE, RUN MIGEST
@@ -449,19 +449,19 @@ meta <- nodesp
 lo <- as.matrix(meta[,2:3])
 
 #get rid of quotes, delete first column when you write csv
-write.csv(lo, file="lo2014locationsp.csv", col.names=TRUE)
-lo <- read.csv(file="lo2014locationsp.csv", header=TRUE)
+write.csv(lo, file="lo2015locationsp.csv", col.names=TRUE)
+lo <- read.csv(file="lo2015locationsp.csv", header=TRUE)
 
-edgesp <- edgesp %>% group_by(one, two) %>% filter(row_number() == 1) 
+#edgesp <- edgesp %>% group_by(one, two) %>% filter(row_number() == 1) 
 edgesp <- edgesp %>% count(one, two)
 
-plot(map_new, xlim=c(124.7, 124.8 ), ylim=c(10.65,10.85))
+plot(map_new, xlim=c(124.77, 124.79 ), ylim=c(10.65,10.89))
 
 a <- graph_from_data_frame(d=edgesp, vertices=nodesp, directed=TRUE)
 
-katPlot(a, rescale=FALSE, asp=0, add=TRUE, edge.arrow.size=.2, vertex.size=.4, vertex.frame.color=NA, 
+katPlot(a, rescale=FALSE, asp=0, add=TRUE, edge.arrow.size=.4, vertex.size=.4, vertex.frame.color=NA, 
 	 vertex.label.cex=.7, vertex.color= "orange", vertex.label.degree=pi, vertex.label.dist=.1, edge.width=edgesp$n,
-		edge.color="slate gray", layout=lo, edge.curved=.4, vertex.label.font=2, vertex.label.color="black")
+		edge.color="slate gray", layout=lo, edge.curved=-.4, vertex.label.font=2, vertex.label.color="black")
 
 #plot siblings and half siblings on a map as points with graduated size to show density of siblings
 edgesfs$one <-edgesfs$one.name
@@ -485,7 +485,7 @@ points(nodesfs$one.lon, nodesfs$one.lat, pch=19, col=alpha("blue", 0.3), cex=nod
 
 edits <- read.csv(file="editlabels13.csv", header=TRUE)
 
-text(edits$lon, edits$lat, labels=edits$site, col="black", cex=.6, offset=.2, pos=2)
+text(edits$lon, edits$lat, labels=edits$site, col="black", cex=.4, offset=.2, pos=2)
 
 #for half siblings
 edgeshs$one <-edgeshs$one.name
@@ -501,16 +501,19 @@ nodeshs <-left_join(nodeshs, nodeshs1)
 nodeshs<- nodeshs %>% group_by(one) %>% filter(row_number() == 1) 
 
 #gather 
-plot(map_new, xlim=c(124.7, 124.8 ), ylim=c(10.60,10.89))
-points(nodeshs$one.lon, nodeshs$one.lat, pch=10, col=alpha("dark blue", 0.3), cex=nodeshs$n/6)
-points(nodeshs$one.lon, nodeshs$one.lat, pch=19, col=alpha("blue", 0.3), cex=nodeshs$n/6)
+points(nodeshs$one.lon, nodeshs$one.lat, pch=10, col=alpha("dark gray", 0.3), cex=nodeshs$n/6)
+points(nodeshs$one.lon, nodeshs$one.lat, pch=19, col=alpha("gray", 0.3), cex=nodeshs$n/6)
 
 #move points for crunchy sites
 
 edits <- read.csv(file="editlabels13.csv", header=TRUE)
 
-text(edits$lon, edits$lat, labels=edits$site, col="black", cex=.6, offset=.2, pos=2)
+text(edits$lon, edits$lat, labels=edits$site, col="black", cex=.4, offset=.2, pos=2)
 
+#add parents
+katPlot(a, rescale=FALSE, asp=0, add=TRUE, edge.arrow.size=.4, vertex.size=.4, vertex.frame.color=NA, 
+	 vertex.label=NA, vertex.color= "orange", vertex.label.degree=pi, vertex.label.dist=.1, edge.width=edgesp$n,
+		edge.color="slate gray", layout=lo, edge.curved=-.7, vertex.label.font=2, vertex.label.color="black")
 
 
 

@@ -9,7 +9,7 @@ suppressMessages(library(dplyr))
 library(igraph)
 
 #import data
-pairs <- read.table(file= "174HQ_parentage_2014.Maternity.txt", header= TRUE)	
+pairs <- read.table(file= "175HQloci_adults_sep_2015.Maternity.txt", header= TRUE)	
 labor <- conlabor()
 
 
@@ -157,8 +157,8 @@ match3 <- match %>% filter(Probability > 0.95)
 match4 <- match2 %>% filter(Probability > 0.95)	
 
 #now check out how different analysis parameters compare
-fullsib <- read.table(file= "174HQloci_adult_sep_2013NP.FullSibDyad.txt", header= TRUE)
-halfsib <- read.table(file= "174HQloci_adult_sep_2013NP.HalfSibDyad.txt", header= TRUE)	
+fullsib <- read.table(file= "175HQloci_adults_sep_2015.FullSibdyad.txt", header= TRUE)
+halfsib <- read.table(file= "175HQloci_adults_sep_2015.HalfSibdyad.txt", header= TRUE)	
 fsNP <- fullsib %>% filter(Probability > 0.98)
 hsNP <- halfsib %>% filter(Probability > 0.98)
 fsWP1 <- fullsib %>% filter(Probability > 0.98)
@@ -176,5 +176,7 @@ er <- read.table(file='174HQ_ErrorRate.txt', header=TRUE)
 
 mean(er$OtherErrorRateEst)
 hist(er$OtherErrorRateEst, breaks=(40), xlim=c(0,  .40))
+
+#how many siblings are also related to parentage
 
 
