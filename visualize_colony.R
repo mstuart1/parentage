@@ -5,14 +5,14 @@ setwd("~/Documents/GradSchool/parentage")
 #source("~/Documents/GradSchool/parentage/readGenepop_space.R")
 suppressMessages(library(dplyr))
 library(igraph)
-fullsib <- read.table(file= "175HQloci_adults_sep_2015.FullSibdyad.txt", header= TRUE)
-halfsib <- read.table(file= "175HQloci_adults_sep_2015.HalfSibdyad.txt", header= TRUE)	
-pairs <- read.table(file= "175HQloci_adults_sep_2015.Maternity.txt", header= TRUE)	
+fullsib <- read.table(file= "20170831colony12.FullSibDyad.txt", header= TRUE)
+halfsib <- read.table(file= "20170831colony12.HalfSibDyad.txt", header= TRUE)	
+pairs <- read.table(file= "20170831colony12.Maternity.txt", header= TRUE)	
 
 #first get rid of low probability matches
 fullsib <-data.frame(filter(fullsib, Probability > 0.98), stringsAsFactors = FALSE)
 halfsib <- data.frame(filter(halfsib, Probability > 0.98), stringsAsFactors = FALSE)
-pairs <- data.frame(filter(pairlatlon, ProbMum1 > 0.98), stringsAsFactors = FALSE)
+pairs <- data.frame(filter(pairs, ProbMum1 > 0.98), stringsAsFactors = FALSE)
 
 edgesp <- data.frame(select(pairs, OffspringID, InferredMum1), stringsAsFactors = FALSE)
 edgesp$type <- "parent"
@@ -50,7 +50,7 @@ E(net)$color <- as.factor(E(net)$type)
 #plot
 plot(net, edge.arrow.size=.4, vertex.label=V(net)$nodes, vertex.size=2, edge.color=c("green", "orange", "blue")[(E(net)$type=="parent")+2],
 
-     vertex.frame.color="gray", vertex.label.color="black", vertex.label.cex=0.1, vertex.label.dist=0)
+     vertex.frame.color="gray", vertex.label.color="black", vertex.label.cex=0.3, vertex.label.dist=0)
 	 
 net
 
