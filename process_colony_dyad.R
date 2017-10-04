@@ -9,7 +9,7 @@ suppressMessages(library(dplyr))
 library(igraph)
 
 #import data
-pairs <- read.table(file= "175HQloci_adults_sep_2015.Maternity.txt", header= TRUE)	
+pairs <- read.table(file= "20170831colony15.Maternity.txt", header= TRUE)	
 labor <- conlabor()
 
 
@@ -40,15 +40,15 @@ idcsv <- withpar
 # ----------------------------------------------------------
 leyte <- conleyte()
 
-c1 <- leyte %>% tbl("diveinfo") %>% select(id, date, name)
-c2 <- leyte %>% tbl("anemones") %>% select(dive_table_id, anem_table_id, ObsTime)
-c3 <- left_join(c2, c1, by = c(dive_table_id = "id"))
-c4 <- tbl(leyte, sql("SELECT fish_table_id, anem_table_id, Sample_ID, Size FROM clownfish where Sample_ID is not NULL"))
-first <- collect(left_join(c4, c3, by = "anem_table_id"))
+c1 <- leyte %>% tbl("diveinfo") %>% select(dive_table_id, date, site)
+c2 <- leyte %>% tbl("anemones") %>% select(dive_table_id, anem_table_id, obs_time)
+c3 <- as.data.frame(left_join(c2, c1, by = "dive_table_id"))
+c4 <- as.data.frame(tbl(leyte, sql("SELECT fish_table_id, anem_table_id, Sample_ID, Size FROM clownfish where Sample_ID is not NULL")))
+first <- as.data.frame((left_join(c4, c3, by = "anem_table_id")))
 
 ### WAIT ###
 
-second <- collect(left_join(c4, c3, by = "anem_table_id"))
+second <- as.data.frame(left_join(c4, c3, by = "anem_table_id"))
 
 
 
@@ -58,17 +58,10 @@ names(second) <- paste("par.", names(second), sep = "")
 idcsv <- left_join(idcsv, first, by = c(offs.sample_id = "offs.Sample_ID"))
 idcsv <- left_join(idcsv, second, by = c(par.sample_id = "par.Sample_ID"))
 
-#create potential adults file
-c1 <- leyte %>% tbl("diveinfo") %>% select(id, date, name)
-c2 <- leyte %>% tbl("anemones") %>% select(dive_table_id, anem_table_id, ObsTime)
-c3 <- left_join(c2, c1, by = c(dive_table_id = "id"))
-c4 <- tbl(leyte, sql("SELECT fish_table_id, anem_table_id, Sample_ID, Size FROM clownfish where Sample_ID is not NULL"))
-first <- collect(left_join(c4, c3, by = "anem_table_id"))
-
-c1 <- leyte %>% tbl("clownfish") %>% select(size, sample_id, col, Spp)
+c1 <- leyte %>% tbl("clownfish") %>% select(size, sample_id, color, fish_spp)
 c2 <-collect(c1)
-clowns<- filter(c2, Spp=="APCL")
-clownA <- filter(clowns, size >= "8" | col== "OR")
+clowns<- filter(c2, fish_spp=="APCL")
+clownA <- filter(clowns, size >= "8" | color== "OR")
 
 #get rid of rows with NA in sample_id
 adultID <-filter(clownA, sample_id != "NA")
@@ -88,7 +81,7 @@ names(second) <- paste("par.", names(second), sep = "")
 idcsv <- left_join(idcsv, second, by = c("par.sample_id"))
 idcsv <- left_join(idcsv, first, by =  c(OffspringID = "offs.sample_id"))
 
-#what's the distribution of parent and offspring sizes look like?
+##what's the distribution of parent and offspring sizes look like?
 
 mean(idcsv$offs.Size)
 mean(idcsv$par.Size)
@@ -111,12 +104,12 @@ good
 
 #about one quarter of the calculated parent offspring pairs make sense. The remainder could be siblings, so let's look at the full sibs and half sibs. There are more half sibs than full sibs, which could make some sense if the parent pairs aren't consistent year to year. In which case, a you're more likely to get more half sibs than full sibs because the type 1 survivorship of clownfish in general. let's take a look
 
-fullsib <- read.table(file= "174HQ_parentage_2014.FullSibDyad.txt", header= TRUE)
+fullsib <- read.table(file= "20170831colony15.FullSibDyad.txt", header= TRUE)
 fullsibOFF <- fullsib
 names(fullsibOFF) <- paste("fullsibOFFS.", names(fullsibOFF), sep = "")
 
 	
-halfsib <- read.table(file= "174HQ_parentage_2014.HalfSibDyad.txt", header= TRUE)	
+halfsib <- read.table(file= "20170831colony14.HalfSibDyad.txt", header= TRUE)	
 halfsibOFF <- halfsib
 names(halfsibOFF) <- paste("halfsibOFFS.", names(halfsibOFF), sep = "")
 
@@ -133,10 +126,10 @@ withhspar <- left_join(withfspar, halfsibPAR, by=c(InferredMum1 = "halfsibPAR.hs
 
 
 
-goodfs <- idcsv %>%	select(OffspringID, InferredMum1, offs.name, par.name, offs.Size, par.Size, ratio, sib2.x)
+#goodfs <- idcsv %>%	select(OffspringID, InferredMum1, offs.name, par.name, offs.Size, par.Size, ratio, sib2.x)
 good
 
-write.csv(withhspar, file="174_colonypars_sibs_adultsep14.csv", quote=FALSE, col.names=TRUE)
+write.csv(withhspar, file="20170831colony15.csv", quote=FALSE, col.names=TRUE)
 
 
 #now look at the difference between full likelihood parentage and pairwise parentage
