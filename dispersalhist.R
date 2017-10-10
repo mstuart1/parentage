@@ -11,7 +11,7 @@ library(geosphere)
 library(plotrix)
 library(fields)
 library(tidyr)
-
+library(wesanderson)
 #calculate the distance between all parent-offspring matches 
 
 leyte <- conleyte()
@@ -281,21 +281,35 @@ ggplot()+
 			   theme(panel.border = element_blank(),
 			   axis.line.x = element_line(size = 0.5, linetype = "solid", colour = "black"),
 			   axis.line.y = element_line(size = 0.5, linetype = "solid", colour = "black")) +
-			   xlab("Distance (km)") + ylab("Probability Density") + guides(fill=FALSE)+ scale_fill_brewer(palette="Set1")+
+			   xlab("Distance (km)") + ylab("Probability Density") + guides(fill=FALSE)+scale_color_manual(values=wes_palette(n=4, name="Zissou"))+
 			   scale_x_continuous(limits = c(0,28), expand = c(0, 0)) +
 		   	geom_vline(data=allmean2, aes(xintercept=distkm, colour=year),
-		              linetype="dashed", size=1.5) + scale_colour_brewer(palette="Set1")
+		              linetype="dashed", size=1.5) + scale_color_manual(values=wes_palette(n=5, name="Zissou"))
 #plot annual density dispersal
+#subset data so you can sequentially add years to a graph and get an idea of variability
+#year needs to be a factor to get same color in line and fill
+one <- bind_rows(thirteen, twelve)
+one$year <- as.factor(one$year)
+two <- bind_rows(thirteen, fourteen, twelve)
+two$year <- as.factor(two$year)
+three <- bind_rows(thirteen, fourteen, fifteen, twelve)
+three$year <- as.factor(three$year)
+#set colors
+onec <- c("red")
+twoc <- c("red", "blue")
+threec<- c("red", "blue", "green")
 ggplot()+ 
-	geom_density(data=fifteen, aes(x=distkm), fill="red")+
+	geom_density(data=three, aes(x=distkm, color= year, postion="stack"), alpha=.5, size=2 )+
 			   theme_bw() + theme(panel.grid.major = element_blank(),
 			   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text=element_text(family="Helvetica", size= 20), 
-			   legend.position=c(.9, .8), legend.title=element_blank())+ theme(legend.key = element_blank())+
+			   legend.position=c(.9, .8), legend.title=element_blank()) + theme(legend.key = element_blank())+ 
 			   theme(panel.border = element_blank(),
 			   axis.line.x = element_line(size = 0.5, linetype = "solid", colour = "black"),
 			   axis.line.y = element_line(size = 0.5, linetype = "solid", colour = "black")) +
-			   xlab("Distance (km)") + ylab("Probability Density") + guides(fill=FALSE)+ scale_fill_brewer(palette="Set1")+
-			   scale_x_continuous(limits = c(0,28), expand = c(0, 0)) 
+			   xlab("Distance (km)") + ylab("Probability Density") + guides(fill=FALSE)+scale_color_manual(values=wes_palette(n=4, name="Zissou"))+
+			   scale_x_continuous(limits = c(0,28), expand = c(0, 0)) +
+			   scale_y_continuous(limits = c(0,.5), expand = c(0, 0)) 
+			   
 
 #above plot is good
 #this plot below sucks

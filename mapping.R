@@ -193,6 +193,243 @@ katPlot(a, rescale=FALSE, asp=0, add=TRUE, edge.arrow.size=.4, vertex.size=0, ve
 #  ‘+’ not meaningful for factors
 #this meant that the layout had site names still (just get rid of them), so make sure there are no factor
 
+
+
+
+####HERE IS CODE FOR GROUPING THE SITES INTO THREE BINS, TO MAKE A BETTER VISUAL MAP OF CONNECTIVITY
+
+twelve <- read.csv("pairdist2012.csv", header=TRUE)
+thirteen <- read.csv("pairdist2013.csv", header=TRUE)
+fourteen <- read.csv("pairdist2014.csv", header=TRUE)
+fifteen <- read.csv("pairdist2015.csv", header=TRUE)
+
+#add year grouping variables
+twelve$year <- '2012'
+thirteen$year <- '2013'
+fourteen$year <- '2014'
+fifteen$year <- '2015'
+
+all <- bind_rows(twelve, thirteen, fourteen, fifteen)
+all <- all %>% select(-X)
+head(all)
+#break matches up as region to region rather than site to site. Use geographic barriers like river north of visca and sand flats south of gabas
+#for parents
+target1 <- c("Palanas", "Wangag", "Magbangon", "Elementary School", "Sitio Tugas", "Sitio Lonas", "Cabatoan", "Caridad Cemetery",  "Cardidad Proper", "Poroc Rose", "Poroc San Flower", "San Agustin", "Hicgop", "Hicgop South")
+north <- all %>% filter(par.site %in% target)
+north$par.region <- "north"
+target2 <- c("Visca")
+mid <- all %>% filter(par.site %in% target2)
+mid$par.region <- ("mid")
+target3 <- c("Sitio Baybayon", "Tamakin Dacot", "Haina", "Tamakin Dacat")
+south <- all%>% filter(par.site %in% target3)
+south$par.region <- "south"
+
+#for offspring
+target1 <- c("Palanas", "Wangag", "Magbangon", "Elementary School", "Sitio Tugas", "Sitio Lonas", "Cabatoan", "Caridad Cemetery",  "Cardidad Proper", "Poroc Rose", "Poroc San Flower", "San Agustin", "Hicgop", "Hicgop South")
+north2 <- all %>% filter(offs.site %in% target)
+north2$offs.region <- "north"
+target2 <- c("Visca")
+mid2 <- all %>% filter(offs.site %in% target2)
+mid2$offs.region <- ("mid")
+target3 <- c("Sitio Baybayon", "Tamakin Dacot", "Haina", "Tamakin Dacat")
+south2 <- all%>% filter(offs.site %in% target3)
+south2$offs.region <- "south"
+
+alloffs <- bind_rows(north2, mid2, south2)
+allpars1 <- bind_rows(north, mid, south)
+allpars <- allpars1 %>% select(OffspringID, InferredMum1, par.region)
+allregions <- left_join(alloffs, allpars, by=c("OffspringID" , "InferredMum1"))
+head(allregions)
+#map connections by location
+edgesp <- data.frame(select(allregions, InferredMum1 , OffspringID , par.lat, par.lon, offs.lat, offs.lon, par.region, offs.region), stringsAsFactors = FALSE)
+names(edgesp) <- c("one", "two", "one.lat", "one.lon", "two.lat","two.lon", "one.name", "two.name")#"type")
+edgesp<- edgesp %>% group_by(one, two) %>% filter(row_number() == 1) 
+head(edgesp)
+#for parents
+edgesp$one <-edgesp$one.name
+edgesp$two <- edgesp$two.name
+write.csv(edgesp, file="edgesp.csv", col.names=TRUE, quote=TRUE)
+edgesp <- as.data.frame(read.csv(file="edgesp.csv", header=TRUE))
+edgesp <- edgesp[,2:7]#, [,2:7]
+nodesp <-edgesp#[,1:6]
+nodesp1 <-nodesp %>% ungroup() %>% select(one, one.lon, one.lat)
+nodesp2 <-nodesp %>%  ungroup() %>% select(two, two.lon, two.lat)
+names(nodesp2) <- c("one", "one.lon", "one.lat")
+nodes <- bind_rows(nodesp1, nodesp2)
+names(nodes) <- c("one", "lon", "lat")
+
+nodesp<- nodes %>% group_by(one) %>% filter(row_number() == 1) 
+#names are inconsistent, write csv, edit, reload, MAY NOT HAVE TO DO THIS IF DID IT WITH EDGES ABOVE
+#write.csv(nodesp, file="nodesp.csv", col.names=TRUE, quote=TRUE)
+#nodesp <- as.data.frame(read.csv(file="nodesp.csv", header=TRUE))
+#nodesp <- nodesp[,2:4]
+edits <- read.csv(file="editlabels13.csv", header=TRUE)
+nodes1 <-semi_join(edits, nodesp, by=c(site="one"))
+nodes1 <- select(nodes1, site, lon, lat)
+edgesp <- edgesp %>% count(one, two)
+edgesp$one <- as.character(edgesp$one)
+edgesp$two <- as.character(edgesp$two)
+
+meta <- nodesp
+lo <- meta
+write.csv(lo, file="lo.csv", col.names=TRUE)
+lo <- as.data.frame(read.csv(file="lo.csv", header=TRUE))
+lo <- lo[,2:4]
+lo$lon <- as.numeric(lo$lon)
+lo$lat <- as.numeric(lo$lat)
+lo$one <- NULL #as.character(lo$one)
+#names(lo) <- c("lon", "lat")
+#lo <- lo %>% filter(lon != 'NA', lat != 'NA')
+
+#the lo and nodes is weird lat/lon, so load the edits csv where I fixed the spacing and have all of the labels, then join with the nodes
+
+#it would be nice to code the site names by region. Let's give it a shot.
+target1 <- c("Palanas", "Wangag", "Magbangon", "Elementary School", "Sitio Tugas", "Sitio Lonas", "Cabatoan", "Caridad Cemetery",  "Cardidad Proper", "Poroc Rose", "Poroc San Flower", "San Agustin", "Hicgop", "Hicgop South")
+north <- edits %>% filter(site %in% target)
+north$region <- "north"
+target2 <- c("Visca", "Gabas")
+mid <- edits %>% filter(site %in% target2)
+mid$region <- ("mid")
+target3 <- c("Sitio Baybayon", "Tamakin Dacot", "Haina", "Tamakin Dacat")
+south <- edits%>% filter(site %in% target3)
+south$region <- "south"
+alllabs <- bind_rows(north, mid, south)
+#make a factor to color by levels
+alllabs$region <- as.factor(alllabs$region)
+
+#add color
+cols<-wes_palette(n=3,name="FantasticFox")
+
+colors<-cols[alllabs$region]
+
+library(rgdal)
+map_new <- readOGR("leyte", "coastlines_leyte")
+plot(map_new, xlim=c(124.79, 124.8 ), ylim=c(10.6,10.9))
+text(alllabs$lon, alllabs$lat, labels=alllabs$site, cex=.7, offset=2.1, pos=4, font=2, col=colors)
+
+#edgesp <- edgesp %>% group_by(one, two) %>% filter(row_number() == 1) 
+edgesp <- ungroup(edgesp)
+nodesp <- ungroup(nodesp)
+
+a <- graph_from_data_frame(d=edgesp, vertices=nodesp, directed=TRUE)
+
+katPlot(a, rescale=FALSE, asp=0, add=TRUE, edge.arrow.size=.6, vertex.size=0, vertex.frame.color=NA, 
+	 vertex.label=NA, vertex.color= "orange", vertex.label.dist=1, edge.width=edgesp$n,
+		edge.color="slate grey", layout=lo, edge.curved=-.8, vertex.label.font=0, vertex.label.color="black")
+#edgesp is has 46 matches going north-north, would look better if I scaled it down. Divide by 10 below and then run above plot again
+edgesp$n <- (edgesp$n)/5 
+
+
+##########
+#now do the same but with annual data
+#break matches up as region to region rather than site to site. Use geographic barriers like river north of visca and sand flats south of gabas
+#for parents
+target1 <- c("Palanas", "Wangag", "Magbangon", "Elementary School", "Sitio Tugas", "Sitio Lonas", "Cabatoan", "Caridad Cemetery",  "Cardidad Proper", "Poroc Rose", "Poroc San Flower", "San Agustin", "Hicgop", "Hicgop South")
+north <- fifteen %>% filter(par.site %in% target)
+north$par.region <- "north"
+target2 <- c("Visca")
+mid <- fifteen %>% filter(par.site %in% target2)
+mid$par.region <- ("mid")
+target3 <- c("Sitio Baybayon", "Tamakin Dacot", "Haina", "Tamakin Dacat")
+south <- fifteen%>% filter(par.site %in% target3)
+south$par.region <- "south"
+
+#for offspring
+target1 <- c("Palanas", "Wangag", "Magbangon", "Elementary School", "Sitio Tugas", "Sitio Lonas", "Cabatoan", "Caridad Cemetery",  "Cardidad Proper", "Poroc Rose", "Poroc San Flower", "San Agustin", "Hicgop", "Hicgop South")
+north2 <- fifteen %>% filter(offs.site %in% target)
+north2$offs.region <- "north"
+target2 <- c("Visca")
+mid2 <- fifteen %>% filter(offs.site %in% target2)
+mid2$offs.region <- ("mid")
+target3 <- c("Sitio Baybayon", "Tamakin Dacot", "Haina", "Tamakin Dacat")
+south2 <- fifteen%>% filter(offs.site %in% target3)
+south2$offs.region <- "south"
+
+alloffs <- bind_rows(north2, mid2, south2)
+allpars1 <- bind_rows(north, mid, south)
+allpars <- allpars1 %>% select(OffspringID, InferredMum1, par.region)
+allregions <- left_join(alloffs, allpars, by=c("OffspringID" , "InferredMum1"))
+head(allregions)
+#map connections by location
+edgesp <- data.frame(select(allregions, InferredMum1 , OffspringID , par.lat, par.lon, offs.lat, offs.lon, par.region, offs.region), stringsAsFactors = FALSE)
+names(edgesp) <- c("one", "two", "one.lat", "one.lon", "two.lat","two.lon", "one.name", "two.name")#"type")
+edgesp<- edgesp %>% group_by(one, two) %>% filter(row_number() == 1) 
+head(edgesp)
+#for parents
+edgesp$one <-edgesp$one.name
+edgesp$two <- edgesp$two.name
+write.csv(edgesp, file="edgesp.csv", col.names=TRUE, quote=TRUE)
+edgesp <- as.data.frame(read.csv(file="edgesp.csv", header=TRUE))
+edgesp <- edgesp[,2:7]#, [,2:7]
+nodesp <-edgesp#[,1:6]
+nodesp1 <-nodesp %>% ungroup() %>% select(one, one.lon, one.lat)
+nodesp2 <-nodesp %>%  ungroup() %>% select(two, two.lon, two.lat)
+names(nodesp2) <- c("one", "one.lon", "one.lat")
+nodes <- bind_rows(nodesp1, nodesp2)
+names(nodes) <- c("one", "lon", "lat")
+
+nodesp<- nodes %>% group_by(one) %>% filter(row_number() == 1) 
+#names are inconsistent, write csv, edit, reload, MAY NOT HAVE TO DO THIS IF DID IT WITH EDGES ABOVE
+#write.csv(nodesp, file="nodesp.csv", col.names=TRUE, quote=TRUE)
+#nodesp <- as.data.frame(read.csv(file="nodesp.csv", header=TRUE))
+#nodesp <- nodesp[,2:4]
+edits <- read.csv(file="editlabels13.csv", header=TRUE)
+nodes1 <-semi_join(edits, nodesp, by=c(site="one"))
+nodes1 <- select(nodes1, site, lon, lat)
+edgesp <- edgesp %>% count(one, two)
+edgesp$one <- as.character(edgesp$one)
+edgesp$two <- as.character(edgesp$two)
+
+meta <- nodesp
+lo <- meta
+write.csv(lo, file="lo.csv", col.names=TRUE)
+lo <- as.data.frame(read.csv(file="lo.csv", header=TRUE))
+lo <- lo[,2:4]
+lo$lon <- as.numeric(lo$lon)
+lo$lat <- as.numeric(lo$lat)
+lo$one <- NULL #as.character(lo$one)
+#names(lo) <- c("lon", "lat")
+#lo <- lo %>% filter(lon != 'NA', lat != 'NA')
+
+#the lo and nodes is weird lat/lon, so load the edits csv where I fixed the spacing and have all of the labels, then join with the nodes
+
+#it would be nice to code the site names by region. Let's give it a shot.
+target1 <- c("Palanas", "Wangag", "Magbangon", "Elementary School", "Sitio Tugas", "Sitio Lonas", "Cabatoan", "Caridad Cemetery",  "Cardidad Proper", "Poroc Rose", "Poroc San Flower", "San Agustin", "Hicgop", "Hicgop South")
+north <- edits %>% filter(site %in% target)
+north$region <- "north"
+target2 <- c("Visca", "Gabas")
+mid <- edits %>% filter(site %in% target2)
+mid$region <- ("mid")
+target3 <- c("Sitio Baybayon", "Tamakin Dacot", "Haina", "Tamakin Dacat")
+south <- edits%>% filter(site %in% target3)
+south$region <- "south"
+alllabs <- bind_rows(north, mid, south)
+#make a factor to color by levels
+alllabs$region <- as.factor(alllabs$region)
+
+#add color
+cols<-wes_palette(n=3,name="FantasticFox")
+
+colors<-cols[alllabs$region]
+
+library(rgdal)
+map_new <- readOGR("leyte", "coastlines_leyte")
+plot(map_new, xlim=c(124.79, 124.8 ), ylim=c(10.6,10.9))
+text(alllabs$lon, alllabs$lat, labels=alllabs$site, cex=.7, offset=1.2, pos=2, font=2, col=colors)
+
+a <- graph_from_data_frame(d=edgesp, vertices=nodesp, directed=TRUE)
+
+katPlot(a, rescale=FALSE, asp=0, add=TRUE, edge.arrow.size=.6, vertex.size=0, vertex.frame.color=NA, 
+	 vertex.label=NA, vertex.color= NA, vertex.label.dist=1, edge.width=edgesp$n,
+		edge.color="slate grey", layout=lo, edge.curved=.8, vertex.label.font=0, vertex.label.color="black")
+#edgesp is has 46 matches going north-north, would look better if I scaled it down. Divide by 10 below and then run above plot again
+edgesp$n <- (edgesp$n)/2
+
+
+
+
+
+
 #start adding sibling data
 fullsib <- read.table(file= "20170831colony13.FullSibDyad.txt", header= TRUE)
 halfsib <- read.table(file= "20170831colony13.HalfSibDyad.txt", header= TRUE)	
