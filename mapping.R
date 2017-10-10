@@ -25,7 +25,7 @@ labor <- conlabor()
 
 #load tables with parent offspring matches and attach lat lon
 #prepare full likelihood parentage/sibship results for mapping
-pairs <- read.table(file= "20170831colony13.Maternity.txt", header= TRUE)
+pairs <- read.table(file= "20170927colony13.Maternityc.txt", header= TRUE)
 
 # add lab IDs
 
@@ -42,18 +42,19 @@ sec <- labid
 names(sec) <- paste("par.", names(sec), sep = "")
 pairs <- left_join(pairs, sec, by=c(InferredMum1="par.ligation_id"))
 
-c1 <- leyte %>% tbl("diveinfo") %>% select(dive_table_id, date, site, gps)
+c1 <- leyte %>% tbl("diveinfo") %>% select(dive_table_id, date, site, gps, dive_type)
 c2 <- leyte %>% tbl("anemones") %>% select(dive_table_id, anem_table_id, obs_time)
 c3 <- as.data.frame(left_join(c2, c1, by ="dive_table_id"))
 c4 <- as.data.frame(tbl(leyte, sql("SELECT fish_table_id, anem_table_id, sample_id, size FROM clownfish where sample_id is not NULL")))
 fieldid <- as.data.frame((left_join(c4, c3, by = "anem_table_id")))
-
+dim(fieldid)
+stuff <- fieldid %>% group_by(dive_type) %>% filter(dive_type=="C")
 #now add parent info
 
-first <- fieldid
+first <- stuff
 names(first) <- paste("offs.", names(first), sep = "")
 pairs <- left_join(pairs, first, by="offs.sample_id")
-second <- fieldid
+second <- stuff
 names(second) <- paste("par.", names(second), sep = "")
 pairs <- left_join(pairs, second, by="par.sample_id")
 #2014 L1250 looses it's site name in this process... can't figure out why. If you go back through the script you can see L1250 came from Carirdad Proper
@@ -165,15 +166,15 @@ lo <- as.data.frame(read.csv(file="lo.csv", header=TRUE))
 lo <- lo[,2:3]
 lo$lon <- as.numeric(lo$lon)
 lo$lat <- as.numeric(lo$lat)
-
+lo$one <- as.character(lo$one)
 #names(lo) <- c("lon", "lat")
 #lo <- lo %>% filter(lon != 'NA', lat != 'NA')
 
 #the lo and nodes is weird lat/lon, so load the edits csv where I fixed the spacing and have all of the labels, then join with the nodes
 library(rgdal)
 map_new <- readOGR("leyte", "coastlines_leyte")
-plot(map_new, xlim=c(124.79, 124.8 ), ylim=c(10.65,10.9))
-text(edits$lon, edits$lat, labels=edits$site, col="black", cex=.7, offset=.2, pos=2)
+plot(map_new, xlim=c(124.79, 124.8 ), ylim=c(10.6,10.9))
+text(edits$lon, edits$lat, labels=edits$site, col="black", cex=.7, offset=1.8, pos=4)
 
 #edgesp <- edgesp %>% group_by(one, two) %>% filter(row_number() == 1) 
 edgesp <- ungroup(edgesp)
@@ -182,10 +183,15 @@ nodesp <- ungroup(nodesp)
 a <- graph_from_data_frame(d=edgesp, vertices=nodesp, directed=TRUE)
 
 katPlot(a, rescale=FALSE, asp=0, add=TRUE, edge.arrow.size=.4, vertex.size=0, vertex.frame.color=NA, 
-	 vertex.label=NA, vertex.color= "orange", vertex.label.degree=pi, vertex.label.dist=.1, edge.width=edgesp$n,
-		edge.color="blue", layout=lo, edge.curved=-.8, vertex.label.font=0, vertex.label.color="black")
+	 vertex.label=NA, vertex.color= "orange", vertex.label.dist=.1, edge.width=edgesp$n,
+		edge.color="slate grey", layout=lo, edge.curved=-.8, vertex.label.font=0, vertex.label.color="black")
 
-
+#Warning messages:
+#1: In Ops.factor(layout[loops.v, 1], cos(la) * vs) :
+#  ‘+’ not meaningful for factors
+#2: In Ops.factor(layout[, 1], label.dist * cos(-label.degree) * (vertex.size +  :
+#  ‘+’ not meaningful for factors
+#this meant that the layout had site names still (just get rid of them), so make sure there are no factor
 
 #start adding sibling data
 fullsib <- read.table(file= "20170831colony13.FullSibDyad.txt", header= TRUE)
